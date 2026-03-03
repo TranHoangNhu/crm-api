@@ -1,5 +1,7 @@
 import { ValidationPipe, INestApplication } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import * as express from 'express';
+import { join } from 'path';
 
 export function setupApp(app: INestApplication) {
   const configService = app.get(ConfigService);
@@ -31,6 +33,9 @@ export function setupApp(app: INestApplication) {
       },
     }),
   );
+
+  // Serve Compodoc documentation generated at project root
+  app.use('/docs', express.static(join(process.cwd(), 'documentation')));
 
   return app;
 }
