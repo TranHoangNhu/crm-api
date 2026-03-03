@@ -33,12 +33,21 @@ export class HealthController {
       this.logger.error('Supabase ping crashed: ' + err.message);
     }
 
+    const fs = require('fs');
+    let files = [];
+    try {
+      files = fs.readdirSync(process.cwd());
+    } catch (e) {}
+
     return {
       status: 'ok',
       supabase: dbStatus,
       latency: `${dbLatency}ms`,
       timestamp: new Date().toISOString(),
       service: 'crm-api',
+      cwd: process.cwd(),
+      dirname: __dirname,
+      files,
     };
   }
 }
