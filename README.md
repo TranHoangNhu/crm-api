@@ -1,98 +1,93 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# CRM API Backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Đây là mã nguồn Backend API của dự án CRM, được xây dựng dựa trên framework [NestJS](https://nestjs.com/). API này đóng vai trò trung gian xử lý các tác vụ phức tạp, bảo mật nghiệp vụ và giao tiếp với cơ sở dữ liệu Supabase, phục vụ cho ứng dụng web CRM (Next.js).
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## 🚀 Các tính năng cốt lõi (Core Modules)
 
-## Description
+Hệ thống được thiết kế theo cấu trúc module hoá (Modular Architecture), bao gồm các tính năng chính sau:
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- **Auth Module**: Xử lý xác thực (Authentication) và phân quyền (Authorization) dựa vào Supabase JWT token. Đảm bảo an toàn cho các endpoint thông qua Guards.
+- **Supabase Module**: Cung cấp `SupabaseService` sử dụng [Supabase Admin Client (Service Role Key)](https://supabase.com/docs/reference/javascript/admin-api) để bypass RLS (Row Level Security) khi cần thực hiện các tác vụ backend đặc quyền.
+- **Quotes Module**: Quản lý tạo báo giá, lưu trữ các module báo giá và cập nhật trạng thái báo giá một cách nhất quán.
+- **Contracts Module**: Dựa trên báo giá (Quote) đã chốt để tự động sinh ra hợp đồng (Contract), các giai đoạn thanh toán (Payment Phases), và theo dõi công nợ, tiến độ dự án.
+- **Email Module**: Xử lý gửi email tự động (như gửi báo giá cho khách hàng) sử dụng Resend hoặc các dịch vụ SMTP tích hợp sẵn.
+- **PDF Module**: Chứa logic tạo file PDF tự động (từ Hợp đồng, Báo giá) sử dụng Puppeteer/Playwright hoặc các thư viện buffer để khách hàng và admin tải xuống/in ấn trực tiếp.
+- **Delivery Module**: Quản lý quy trình bàn giao dự án, timeline, task và upload tài liệu, thiết kế.
+- **Health Check (`/health`)**: API Ping hệ thống với truy vấn cực nhẹ tới Supabase. Endpoint này được kết nối với [cron-job.org](https://cron-job.org) để tối ưu hoá, tránh trạng thái "Cold Start" (ngủ đông) trên nền tảng Serverless (Vercel) và tự động tạm ngưng phiên Database Supabase do inactivity.
 
-## Project setup
+## 🛠️ Tech Stack (Công nghệ sử dụng)
 
-```bash
-$ npm install
+- **Framework**: [NestJS v10](https://nestjs.com/)
+- **Language**: TypeScript
+- **BaaS (Database & Auth)**: [Supabase](https://supabase.com/)
+- **Deployment**: Hoạt động tối ưu trên [Vercel Serverless Functions](https://vercel.com/) tĩnh thông qua file `serverless.ts` và `vercel.json` (hoặc PM2 với `ecosystem.config.js` nếu host trên VPS).
+
+## 🗂 Cấu trúc thư mục
+
+```text
+src/
+├── app.module.ts            # Móc nối (root module) của toàn bộ ứng dụng
+├── main.ts                  # Entry point cho dev/VPS (chạy qua cổng 3002)
+├── serverless.ts            # Entry point cho triển khai Vercel Serverless
+├── setup.ts                 # File cấu hình chung (CORS, ValidationPipe, Prefix)
+├── health.controller.ts     # Healthcheck endpoint
+├── common/                  # Thư mục chứa guards, decorators và Supabase clients
+│   └── supabase/
+│       └── supabase.service.ts
+└── modules/                 # Các domain module (Auth, Contracts, Quotes, PDF, Email, Delivery)
 ```
 
-## Compile and run the project
+## ⚙️ Cài đặt & Chạy trên môi trường Local
+
+**1. Clone dự án và cài đặt package**
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+git clone https://github.com/TranHoangNhu/crm-api.git
+cd crm-api
+npm install
 ```
 
-## Run tests
+**2. Thiết lập biến môi trường**
+Copy file `.env.example` thành `.env` và điền đầy đủ các thông số thực tế:
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+cp .env.example .env
 ```
 
-## Deployment
+Các biến quan trọng gồm:
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+- `PORT` (Mặc định 3002)
+- `SUPABASE_URL` và `SUPABASE_SERVICE_ROLE_KEY` (Lấy từ Supabase Dashboard)
+- Các biến API Key cho Resend/Email (nếu có)
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+**3. Khởi động ứng dụng**
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+# Chạy ở chế độ development (có hot-reload)
+npm run start:dev
+
+# Build & Chạy ở chế độ production
+npm run build
+npm run start:prod
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+Server sẽ mặc định chạy tại: `http://localhost:3002/api/v1`
 
-## Resources
+## ☁️ Deployment (Triển khai lên Vercel)
 
-Check out a few resources that may come in handy when working with NestJS:
+Dự án đã được config sẵn sàng để deploy lên Vercel dạng Serverless Functions qua file cấu hình `vercel.json` và `src/serverless.ts`.
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+1. Khởi tạo / Liên kết project trên Vercel.
+2. Tại màn hình Dashboard Vercel, cài đặt biến môi trường tương ứng trong tab **Settings > Environment Variables**.
+3. Push code lên nhánh `main`, Vercel sẽ tự động build và deploy backend API.
 
-## Support
+**Cảnh báo ngủ đông (Cold Start):**
+Các tài khoản Vercel/Supabase gói miễn phí sẽ có cơ chế tạm ngưng (Pause) nếu không có truy cập. Dự án này sử dụng _Cronjob_ (đã cấu hình chọc vào api `/api/v1/health` mỗi 14 phút/lần) để giữ ứng dụng luôn sẵn sàng phục vụ nhanh nhất (Warm).
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+## 🤝 Contributing & Maintenance
 
-## Stay in touch
+Vì hệ thống tuân theo Design Pattern của NestJS, mọi Module mới được tạo ra nên được đặt trong thư mục `src/modules/` và đăng ký vào `app.module.ts`. Giữ cho API Controllers sạch sẽ và đẩy các logic xử lý phức tạp vào `Services`.
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+---
 
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+_Trân trọng cảm ơn!_
